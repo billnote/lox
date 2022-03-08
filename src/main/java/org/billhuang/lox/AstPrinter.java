@@ -36,6 +36,11 @@ public class AstPrinter implements Expr.Visitor<String>{
         return null;
     }
 
+    @Override
+    public String visitFunctionExpr(Expr.Function expr) {
+        return null;
+    }
+
 
     @Override
     public String visitGroupingExpr(Expr.Grouping expr) {

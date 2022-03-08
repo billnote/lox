@@ -9,6 +9,7 @@ abstract class Expr {
          R visitConditionalExpr(Conditional expr);
          R visitBinaryExpr(Binary expr);
          R visitCallExpr(Call expr);
+         R visitFunctionExpr(Function expr);
          R visitGroupingExpr(Grouping expr);
          R visitLiteralExpr(Literal expr);
          R visitLogicalExpr(Logical expr);
@@ -90,6 +91,20 @@ abstract class Expr {
         final Expr callee;
         final Token paren;
         final List<Expr> arguments;
+    }
+    static class Function extends Expr {
+        Function(List<Token> params, List<Stmt> body) {
+            this.params = params;
+            this.body = body;
+        }
+
+        @Override
+        <R> R accept(Visitor<R> visitor) {
+            return visitor.visitFunctionExpr(this);
+        }
+
+        final List<Token> params;
+        final List<Stmt> body;
     }
     static class Grouping extends Expr {
         Grouping(Expr expression) {

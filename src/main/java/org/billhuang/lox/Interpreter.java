@@ -120,6 +120,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
     }
 
     @Override
+    public Object visitFunctionExpr(Expr.Function expr) {
+        return new LoxFunction(null, expr, environment);
+    }
+
+    @Override
     public Object visitGroupingExpr(Expr.Grouping expr) {
         return evaluate(expr.expression);
     }
@@ -255,7 +260,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 
     @Override
     public Void visitFunctionStmt(Stmt.Function stmt) {
-        this.environment.define(stmt.name.lexeme, new LoxFunction(stmt, this.environment));
+        this.environment.define(stmt.name.lexeme, new LoxFunction(stmt.name.lexeme, stmt.function, this.environment));
         return null;
     }
 

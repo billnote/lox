@@ -50,9 +50,11 @@ import java.util.List;
  *              | call ;
  * call        -> primary ( "(" arguments? ")" )* ;
  * arguments   -> expression ( "," expression  )* ;
+ * functionBody -> "fun" "(" parameters? ")" block ;
  * primary     -> NUMBER | STRING | "true" | "false | "nil"
  *              | "(" expression ")"
  *              | IDENTIFIER ;
+ *              | functionBody
  *
  * @Description
  * @Data 2022/2/25 11:16
@@ -112,7 +114,8 @@ public class Parser {
      */
     private Stmt declaration() {
         try{
-            if(match(TokenType.FUN)) {
+            if(check(TokenType.FUN) && checkNext(TokenType.IDENTIFIER)) {
+                consume(TokenType.FUN, null);
                 return funDecl();
             }
             if (match(TokenType.VAR)) {
@@ -134,6 +137,16 @@ public class Parser {
      */
     private Stmt funDecl() {
         Token funName = consume(TokenType.IDENTIFIER, "Expect function name.");
+        Expr.Function function = functionBody();
+
+        return new Stmt.Function(funName, function);
+    }
+
+    /**
+     * functionBody -> "fun" "(" parameters? ")" block ;
+     * @return
+     */
+    private Expr.Function functionBody() {
         consume(TokenType.LEFT_PAREN, "Expect '(' after function name.");
         List<Token> params = new ArrayList<>();
 
@@ -150,7 +163,7 @@ public class Parser {
         consume(TokenType.LEFT_BRACE, "Expect '{' before function body.");
         List<Stmt> body = block();
 
-        return new Stmt.Function(funName, params, body);
+        return new Expr.Function(params, body);
     }
 
     /**
@@ -557,7 +570,7 @@ public class Parser {
      */
     private Expr call() {
         Expr primary = primary();
-        List<Expr> arguments = null;
+        List<Expr> arguments = new ArrayList<>();
         while (match(TokenType.LEFT_PAREN)) {
             if (!check(TokenType.RIGHT_PAREN)) {
                 arguments = arguments();
@@ -566,6 +579,7 @@ public class Parser {
 
             primary = new Expr.Call(primary, paren , arguments);
         }
+
         return primary;
     }
 
@@ -614,6 +628,10 @@ public class Parser {
             return new Expr.Grouping(expr);
         }
 
+        if (match(TokenType.FUN)) {
+            return functionBody();
+        }
+
         throw error(peek(), "Expect expression.");
     }
 
@@ -630,6 +648,12 @@ public class Parser {
 
     private boolean check(TokenType type) {
         return isAtEnd() ? false : peek().type == type;
+    }
+
+    private boolean checkNext(TokenType type) {
+        return isAtEnd() || tokens.get(current + 1).type == TokenType.EOF
+                ? false
+                : tokens.get(current + 1).type == type;
     }
 
     private Token advance() {
