@@ -16,18 +16,19 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>{
         FUNCTION
     }
 
-    private class VariableStatus {
-        boolean defined;
-        boolean used;
+    private class Variable {
+        VariableState state;
+        int slot;
+    }
 
-        VariableStatus(boolean defined, boolean used) {
-            this.defined = defined;
-            this.used = used;
-        }
+    private enum VariableState {
+        DECLARE,
+        DEFINE,
+        READ
     }
 
     private final Interpreter interpreter;
-    private final Stack<Map<String, VariableStatus>> scopes = new Stack<>();
+    private final Stack<Map<String, Variable>> scopes = new Stack<>();
     private FunctionType currentFunction = FunctionType.NONE;
 
     Resolver(Interpreter interpreter) {
@@ -37,7 +38,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>{
     @Override
     public Void visitAssignExpr(Expr.Assign expr) {
         resolve(expr.value);
-        resolveLocal(expr, expr.name);
+        resolveLocal(expr, expr.name, false);
         return null;
     }
 
@@ -102,11 +103,12 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>{
 
     @Override
     public Void visitVariableExpr(Expr.Variable expr) {
-        if (!scopes.isEmpty() && Boolean.FALSE.equals(scopes.peek().get(expr.name.lexeme))) {
+        if (!scopes.isEmpty() && scopes.peek().containsKey(expr.name.lexeme)
+                && scopes.peek().get(expr.name.lexeme).state == VariableState.DECLARE){
             Lox.error(expr.name, "Can't read local variable in its own initializer.");
         }
 
-        resolveLocal(expr, expr.name);
+        resolveLocal(expr, expr.name, true);
         return null;
     }
 
@@ -212,9 +214,9 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>{
     }
 
     private void endScope() {
-        Map<String, VariableStatus> variableStatus = scopes.pop();
-        for (Map.Entry<String, VariableStatus> entry: variableStatus.entrySet()) {
-            if (!entry.getValue().used) {
+        Map<String, Variable> variableStatus = scopes.pop();
+        for (Map.Entry<String, Variable> entry: variableStatus.entrySet()) {
+            if (entry.getValue().state == VariableState.DEFINE) {
                 // TODO report error
                 System.out.println("variable never used. var: " + entry.getKey());
             }
@@ -226,12 +228,16 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>{
             return;
         }
 
-        Map<String, VariableStatus> scope = scopes.peek();
+        Map<String, Variable> scope = scopes.peek();
         if (scope.containsKey(name.lexeme)) {
             Lox.error(name, "Already a variable with this name in this scope");
         }
 
-        scope.put(name.lexeme, new VariableStatus(false, false));
+        Variable variable = new Variable();
+        variable.state = VariableState.DECLARE;
+        variable.slot = scope.size();
+
+        scope.put(name.lexeme, variable);
     }
 
     private void define(Token name) {
@@ -239,15 +245,19 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>{
             return;
         }
 
-        scopes.peek().put(name.lexeme, new VariableStatus(true, false));
+        scopes.peek().get(name.lexeme).state = VariableState.DEFINE;
     }
 
-    private void resolveLocal(Expr expr, Token name) {
+    private void resolveLocal(Expr expr, Token name, boolean isRead) {
         for (int i = scopes.size() - 1; i >= 0; i--) {
-            Map<String, VariableStatus> scope = scopes.get(i);
+            Map<String, Variable> scope = scopes.get(i);
             if (scope.containsKey(name.lexeme)) {
-                scope.put(name.lexeme, new VariableStatus(true, true));
-                interpreter.resolve(expr, scopes.size() - 1 - i);
+                Variable variable = scope.get(name.lexeme);
+                if (isRead) {
+                    variable.state = VariableState.READ;
+                }
+
+                interpreter.resolve(expr, scopes.size() - 1 - i, variable.slot);
                 return;
             }
         }

@@ -11,9 +11,9 @@ class LoxFunction implements LoxCallable{
 
     private final String name;
     private final Expr.Function declaration;
-    private final Environment closure;
+    private final EfficientEnvironment closure;
 
-    LoxFunction(String name, Expr.Function declaration, Environment closure) {
+    LoxFunction(String name, Expr.Function declaration, EfficientEnvironment closure) {
         this.name = name;
         this.declaration = declaration;
         this.closure = closure;
@@ -26,7 +26,7 @@ class LoxFunction implements LoxCallable{
 
     @Override
     public Object call(Interpreter interpreter, List<Object> arguments) {
-        Environment environment = new Environment(closure);
+        EfficientEnvironment environment = new EfficientEnvironment(closure);
         for (int i = 0; i < arguments.size(); i++) {
              environment.define(declaration.params.get(i).lexeme, arguments.get(i));
         }

@@ -12,14 +12,16 @@ import java.util.Map;
  **/
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 
-    final Environment globals = new Environment();
-    private Environment environment = globals;
+    //final Environment globals = new Environment();
+    //private Environment environment = globals;
     //private boolean isBreak = false;
+    private EfficientEnvironment environment = new EfficientEnvironment();
 
     private final Map<Expr, Integer> locals = new HashMap<>();
+    private final Map<Expr, Integer> slots = new HashMap<>();
 
     Interpreter() {
-        globals.define("clock", new LoxCallable() {
+        environment.define("clock", new LoxCallable() {
             @Override
             public int arity() {
                 return 0;
@@ -40,12 +42,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
     @Override
     public Object visitAssignExpr(Expr.Assign expr) {
         Object value = evaluate(expr.value);
-        Integer distance = locals.get(expr);
-        if (distance != null) {
-            environment.assignAt(distance, expr.name, value);
-        } else  {
-            environment.assign(expr.name, value);
-        }
+        environment.assignAt(locals.get(expr), slots.get(expr), expr.name, value);
 
         return value;
     }
@@ -176,12 +173,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
     }
 
     private Object lookUpVariable(Token name, Expr expr) {
-        Integer distance = locals.get(expr);
-        if (distance != null) {
-            return environment.getAt(distance, name.lexeme);
-        } else {
-            return globals.get(name);
-        }
+        return environment.getAt(locals.get(expr), slots.get(expr), name);
     }
 
     private Object evaluate(Expr expr) {
@@ -267,7 +259,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 
     @Override
     public Void visitBlockStmt(Stmt.Block stmt) {
-        executeBlock(stmt.statements, new Environment(this.environment));
+        executeBlock(stmt.statements, new EfficientEnvironment(this.environment));
         return null;
     }
 
@@ -360,8 +352,8 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
         stmt.accept(this);
     }
 
-    void executeBlock(List<Stmt> statements, Environment blockEnv) {
-        Environment previous = this.environment;
+    void executeBlock(List<Stmt> statements, EfficientEnvironment blockEnv) {
+        EfficientEnvironment previous = this.environment;
         try {
             this.environment = blockEnv;
             for (Stmt statement : statements) {
@@ -380,7 +372,8 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
         return true;
     }
 
-    void resolve(Expr expr, int depth) {
+    void resolve(Expr expr, int depth, int slot) {
         locals.put(expr, depth);
+        slots.put(expr, slot);
     }
 }

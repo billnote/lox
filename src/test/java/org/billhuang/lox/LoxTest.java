@@ -95,7 +95,13 @@ public class LoxTest {
     @Test
     public void anonymousFunctionTest() {
         // TODO support anonymous fun
-        String source = "fun call(fn) {  \n var s = \"anonymous fn\"; \n fn(s);\n }\n call(fun (s) {\n print \"hello \" + s;\n});";
+        String source = "fun call(fn) {  \n" +
+                          " var s = \"anonymous fn\"; \n" +
+                          " fn(s);\n" +
+                       " }\n" +
+                       " call(fun (s) {\n" +
+                         " print \"hello \" + s;\n" +
+                       "});";
         Lox.run(source);
     }
 
