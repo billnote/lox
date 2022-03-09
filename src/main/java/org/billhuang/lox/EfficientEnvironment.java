@@ -48,6 +48,10 @@ public class EfficientEnvironment {
 
     }
 
+    void assign(Token name, Object value) {
+        assignAt(null, 0, name, value);
+    }
+
     void assignAt(Integer distance, int slot, Token name, Object value) {
         if (distance == null) {
             if (globals.containsKey(name.lexeme)) {

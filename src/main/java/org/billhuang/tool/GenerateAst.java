@@ -24,6 +24,7 @@ public class GenerateAst {
                 "Conditional  : Expr cond, Expr thenBranch, Expr elseBranch",
                 "Binary       : Expr left, Token operator, Expr right",
                 "Call         : Expr callee, Token paren, List<Expr> arguments",
+                "Get          : Expr object, Token name",
                 "Function     : List<Token> params, List<Stmt> body",
                 "Grouping     : Expr expression",
                 "Literal      : Object value",
@@ -34,6 +35,7 @@ public class GenerateAst {
 
         defineAst(outputDir, "Stmt", Arrays.asList(
                 "Block        : List<Stmt> statements",
+                "Class        : Token name, List<Stmt.Function> methods",
                 "Expression   : Expr expression",
                 "Function     : Token name, Expr.Function function",
                 "If           : Expr condition, Stmt thenBranch, Stmt elseBranch",

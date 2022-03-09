@@ -112,6 +112,12 @@ public class LoxTest {
     }
 
     @Test
+    public void classTest() {
+        String source = "class Test { sayHello() {print \"hello.\";}} print Test; var test = Test(); print test;";
+        Lox.run(source);
+    }
+
+    @Test
     public void testDanglingElse() {
         if (1==1)
             if(1 == 2) System.out.println("top level");

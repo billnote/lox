@@ -12,9 +12,9 @@ import java.util.Map;
  **/
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 
-    //final Environment globals = new Environment();
-    //private Environment environment = globals;
-    //private boolean isBreak = false;
+    // final Environment globals = new Environment();
+    // private Environment environment = globals;
+    // private boolean isBreak = false;
     private EfficientEnvironment environment = new EfficientEnvironment();
 
     private final Map<Expr, Integer> locals = new HashMap<>();
@@ -124,6 +124,16 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
         }
 
         return callable.call(this, arguments);
+    }
+
+    @Override
+    public Object visitGetExpr(Expr.Get expr) {
+        Object object = evaluate(expr.object);
+        if (object instanceof LoxInstance) {
+            return ((LoxInstance) object).get(expr.name);
+        }
+
+        throw new RuntimeError(expr.name, "Only instances have properties.");
     }
 
     @Override
@@ -260,6 +270,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
     @Override
     public Void visitBlockStmt(Stmt.Block stmt) {
         executeBlock(stmt.statements, new EfficientEnvironment(this.environment));
+        return null;
+    }
+
+    @Override
+    public Void visitClassStmt(Stmt.Class stmt) {
+        environment.define(stmt.name.lexeme, new LoxClass(stmt.name.lexeme));
         return null;
     }
 

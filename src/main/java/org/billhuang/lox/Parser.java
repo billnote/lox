@@ -9,9 +9,11 @@ import java.util.List;
  *
  * program     -> declaration* EOF;
  *
- * declaration -> funDecl
+ * declaration -> classDecl
+ *              | funDecl
  *              | varDecl
  *              | statement ;
+ * classDecl   -> "class" IDENTIFIER "{" function* "}" ;
  * funDecl     -> "fun" function ;
  * function    -> IDENTIFIER "(" parameters? ")" block ;
  * parameters  -> IDENTIFIER ( "," IDENTIFIER )* ;
@@ -48,7 +50,7 @@ import java.util.List;
  * factor      -> unary ( ( "/" | "*" ) unary )* ;
  * unary       -> ( "!" | "-") unary
  *              | call ;
- * call        -> primary ( "(" arguments? ")" )* ;
+ * call        -> primary ( "(" arguments? ")" | "." IDENTIFIER )*;
  * arguments   -> expression ( "," expression  )* ;
  * functionBody -> "fun" "(" parameters? ")" block ;
  * primary     -> NUMBER | STRING | "true" | "false | "nil"
@@ -107,14 +109,18 @@ public class Parser {
     }
 
     /**
-     * declaration -> funDecl
+     * declaration -> classDecl
+     *              | funDecl
      *              | varDecl
      *              | statement ;
      * @return
      */
     private Stmt declaration() {
         try{
-            if(check(TokenType.FUN) && checkNext(TokenType.IDENTIFIER)) {
+            if (match(TokenType.CLASS)) {
+                return classDecl();
+            }
+            if (check(TokenType.FUN) && checkNext(TokenType.IDENTIFIER)) {
                 consume(TokenType.FUN, null);
                 return funDecl();
             }
@@ -130,12 +136,30 @@ public class Parser {
     }
 
     /**
+     * classDecl   -> "class" IDENTIFIER "{" function* "}" ;
+     * @return
+     */
+    private Stmt classDecl() {
+        Token className = consume(TokenType.IDENTIFIER, "Expect class name.");
+        consume(TokenType.LEFT_BRACE, "Expect '{' after class name.");
+
+        List<Stmt.Function> functions = new ArrayList<>();
+        while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+            functions.add(funDecl());
+        }
+
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.");
+
+        return new Stmt.Class(className, functions);
+    }
+
+    /**
      * funDecl    -> "fun" function ;
      * function   -> IDENTIFIER "(" parameters? ")" block ;
      * parameters -> IDENTIFIER ( "," IDENTIFIER )* ;
      * @return
      */
-    private Stmt funDecl() {
+    private Stmt.Function funDecl() {
         Token funName = consume(TokenType.IDENTIFIER, "Expect function name.");
         Expr.Function function = functionBody();
 
@@ -565,19 +589,26 @@ public class Parser {
     }
 
     /**
-     * call -> primary ( "(" arguments? ")" )* ;
+     * call -> primary ( "(" arguments? ")" | "." IDENTIFIER )*;
      * @return
      */
     private Expr call() {
         Expr primary = primary();
         List<Expr> arguments = new ArrayList<>();
-        while (match(TokenType.LEFT_PAREN)) {
-            if (!check(TokenType.RIGHT_PAREN)) {
-                arguments = arguments();
-            }
-            Token paren = consume(TokenType.RIGHT_PAREN, "Expect ')' after call arguments.");
+        while (true) {
+            if (match(TokenType.LEFT_PAREN)) {
+                if (!check(TokenType.RIGHT_PAREN)) {
+                    arguments = arguments();
+                }
+                Token paren = consume(TokenType.RIGHT_PAREN, "Expect ')' after call arguments.");
 
-            primary = new Expr.Call(primary, paren , arguments);
+                primary = new Expr.Call(primary, paren , arguments);
+            } else if (match(TokenType.DOT)) {
+                Token name = consume(TokenType.IDENTIFIER, "Expect property name after '.'.");
+                primary = new Expr.Get(primary, name);
+            } else {
+                break;
+            }
         }
 
         return primary;
