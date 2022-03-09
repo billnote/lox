@@ -40,7 +40,7 @@ public class EfficientEnvironment {
             if (globals.containsKey(name.lexeme)) {
                 return globals.get(name.lexeme);
             } else {
-                throw new RuntimeError(name, String.format("Undefined variable '%s'.", name));
+                throw new RuntimeError(name, String.format("Undefined variable '%s'.", name.lexeme));
             }
         } else {
             return ancestor(distance).values.get(slot);

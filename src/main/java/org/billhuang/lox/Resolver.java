@@ -73,7 +73,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>{
 
     @Override
     public Void visitFunctionExpr(Expr.Function expr) {
-        resolve(expr.body);
+        resolveFunction(expr, FunctionType.FUNCTION);
         return null;
     }
 
@@ -131,7 +131,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>{
         declare(stmt.name);
         define(stmt.name);
 
-        resolveFunction(stmt, FunctionType.FUNCTION);
+        resolveFunction(stmt.function, FunctionType.FUNCTION);
         return null;
     }
 
@@ -263,16 +263,16 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>{
         }
     }
 
-    private void resolveFunction(Stmt.Function function, FunctionType type) {
+    private void resolveFunction(Expr.Function function, FunctionType type) {
         FunctionType enclosingFunction = currentFunction;
         currentFunction = type;
 
         beginScope();
-        for (Token param : function.function.params) {
+        for (Token param : function.params) {
             declare(param);
             define(param);
         }
-        resolve(function.function);
+        resolve(function.body);
         endScope();
 
         currentFunction = enclosingFunction;
