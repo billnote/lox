@@ -13,9 +13,10 @@ public class LoxClass extends LoxInstance implements LoxCallable{
     private final Map<String, LoxFunction> methods;
 
     LoxClass(String name, Map<String, LoxFunction> methods) {
-        super(null);
+        super();
         this.name = name;
         this.methods = methods;
+        this.loxClass = this;
     }
 
     @Override

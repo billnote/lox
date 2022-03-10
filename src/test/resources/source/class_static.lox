@@ -3,16 +3,14 @@ class Math {
     return n * n;
   }
 
-  class add(m, n) {
+  add(m, n) {
     return m + n;
   }
 
   squareAndAdd(m, n) {
-    return Math.add(Math.square(m), Math.square(n));
+    return this.add(Math.square(m), Math.square(n));
   }
 }
 
 print Math.square(2);
-print Math.add(1, 2);
-
 print Math().squareAndAdd(1, 2);

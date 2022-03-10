@@ -9,8 +9,12 @@ import java.util.Map;
  * @Author huangshb
  **/
 public class LoxInstance {
-    private LoxClass loxClass;
+    LoxClass loxClass;
     private final Map<String, Object> fields = new HashMap<>();
+
+    LoxInstance() {
+
+    }
 
     LoxInstance(LoxClass loxClass) {
         this.loxClass = loxClass;
