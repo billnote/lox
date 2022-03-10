@@ -12,8 +12,10 @@ class LoxFunction implements LoxCallable{
     private final String name;
     private final Expr.Function declaration;
     private final EfficientEnvironment closure;
+    private final boolean isInitializer;
 
-    LoxFunction(String name, Expr.Function declaration, EfficientEnvironment closure) {
+    LoxFunction(String name, Expr.Function declaration, EfficientEnvironment closure, boolean isInitializer) {
+        this.isInitializer = isInitializer;
         this.name = name;
         this.declaration = declaration;
         this.closure = closure;
@@ -24,7 +26,7 @@ class LoxFunction implements LoxCallable{
         EfficientEnvironment environment = new EfficientEnvironment(closure);
         environment.define("this", instance);
 
-        return new LoxFunction(name, declaration, environment);
+        return new LoxFunction(name, declaration, environment, isInitializer);
     }
 
     @Override
@@ -42,7 +44,15 @@ class LoxFunction implements LoxCallable{
         try {
             interpreter.executeBlock(declaration.body, environment);
         } catch (Return r) {
+            if (isInitializer) {
+                return closure.getAt(0, 0, "this");
+            }
+
             return r.value;
+        }
+
+        if (isInitializer) {
+            return closure.getAt(0, 0, "this");
         }
 
         return null;

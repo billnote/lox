@@ -45,7 +45,18 @@ public class EfficientEnvironment {
         } else {
             return ancestor(distance).values.get(slot);
         }
+    }
 
+    Object getAt(Integer distance, Integer slot, String tokenName) {
+        if (distance == null) {
+            if (globals.containsKey(tokenName)) {
+                return globals.get(tokenName);
+            } else {
+                throw new RuntimeError(tokenName, String.format("Undefined variable '%s'.", tokenName));
+            }
+        } else {
+            return ancestor(distance).values.get(slot);
+        }
     }
 
     void assign(Token name, Object value) {

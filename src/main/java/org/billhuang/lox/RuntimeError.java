@@ -7,9 +7,17 @@ package org.billhuang.lox;
  **/
 public class RuntimeError extends RuntimeException{
     final Token token;
+    final String tokenName;
 
     RuntimeError(Token token, String message) {
         super(message);
         this.token = token;
+        this.tokenName = this.token.lexeme;
+    }
+
+    RuntimeError(String tokenName, String message) {
+        super(message);
+        this.token = null;
+        this.tokenName = tokenName;
     }
 }

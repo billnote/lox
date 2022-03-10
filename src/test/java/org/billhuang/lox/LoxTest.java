@@ -131,6 +131,11 @@ public class LoxTest {
     }
 
     @Test
+    public void classInitTest() throws IOException {
+        Lox.runFile(sourceFile("class_init.lox"));
+    }
+
+    @Test
     public void testDanglingElse() {
         if (1==1)
             if(1 == 2) System.out.println("top level");
