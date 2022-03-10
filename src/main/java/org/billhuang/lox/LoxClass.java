@@ -8,11 +8,12 @@ import java.util.Map;
  * @Data 2022/3/9 17:41
  * @Author huangshb
  **/
-public class LoxClass implements LoxCallable{
+public class LoxClass extends LoxInstance implements LoxCallable{
     private final String name;
     private final Map<String, LoxFunction> methods;
 
-    LoxClass(String name, Map<String, LoxFunction> methods ) {
+    LoxClass(String name, Map<String, LoxFunction> methods) {
+        super(null);
         this.name = name;
         this.methods = methods;
     }

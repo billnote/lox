@@ -15,7 +15,7 @@ import java.util.List;
  *              | statement ;
  * classDecl   -> "class" IDENTIFIER "{" function* "}" ;
  * funDecl     -> "fun" function ;
- * function    -> IDENTIFIER "(" parameters? ")" block ;
+ * function    -> ( "class" )? IDENTIFIER "(" parameters? ")" block ;
  * parameters  -> IDENTIFIER ( "," IDENTIFIER )* ;
  * varDecl     -> "var" IDENTIFIER ( "=" expression )? ";" ;
  * statement   -> exprStmt
@@ -118,6 +118,10 @@ public class Parser {
      */
     private Stmt declaration() {
         try{
+            if (check(TokenType.CLASS, TokenType.IDENTIFIER, TokenType.LEFT_BRACE)) {
+                consume(TokenType.CLASS, null);
+                return classDecl();
+            }
             if (match(TokenType.CLASS)) {
                 return classDecl();
             }
@@ -145,18 +149,25 @@ public class Parser {
         consume(TokenType.LEFT_BRACE, "Expect '{' after class name.");
 
         List<Stmt.Function> functions = new ArrayList<>();
+        List<Stmt.Function> staticFunctions = new ArrayList<>();
+
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
-            functions.add(funDecl());
+            if (check(TokenType.CLASS, TokenType.IDENTIFIER, TokenType.LEFT_PAREN)) {
+                consume(TokenType.CLASS, "Expect 'class' keyword before static function name.");
+                staticFunctions.add(funDecl());
+            } else {
+                functions.add(funDecl());
+            }
         }
 
         consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.");
 
-        return new Stmt.Class(className, functions);
+        return new Stmt.Class(className, functions, staticFunctions);
     }
 
     /**
      * funDecl    -> "fun" function ;
-     * function   -> IDENTIFIER "(" parameters? ")" block ;
+     * function   -> ( "class" )? IDENTIFIER "(" parameters? ")" block ;
      * parameters -> IDENTIFIER ( "," IDENTIFIER )* ;
      * @return
      */
@@ -695,6 +706,24 @@ public class Parser {
         return isAtEnd() || tokens.get(current + 1).type == TokenType.EOF
                 ? false
                 : tokens.get(current + 1).type == type;
+    }
+
+    private boolean checkStep(int step, TokenType type) {
+        if (isAtEnd() || current + step >= tokens.size()) {
+            return false;
+        }
+
+        return tokens.get(current + step).type  == type;
+    }
+
+    private boolean check(TokenType... types) {
+        for (int i = 0; i < types.length; i++) {
+            if (!checkStep(i, types[i])) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private Token advance() {

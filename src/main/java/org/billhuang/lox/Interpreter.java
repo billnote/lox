@@ -303,6 +303,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
         }
 
         LoxClass loxClass = new LoxClass(stmt.name.lexeme, methods);
+
+        for (Stmt.Function method: stmt.staticMethods) {
+            LoxFunction function = new LoxFunction(method.name.lexeme, method.function, environment, false);
+            loxClass.set(method.name, function);
+        }
+
         environment.define(stmt.name.lexeme, loxClass);
 
         return null;
