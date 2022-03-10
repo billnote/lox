@@ -2,12 +2,15 @@ package org.billhuang.lox;
 
 import org.junit.Test;
 
+import java.io.IOException;
+
 /**
  * @Description
  * @Data 2022/2/25 15:54
  * @Author huangshb
  **/
 public class LoxTest {
+    String resourcePath = getClass().getResource("/").getPath();
 
     @Test
     public void runReplTest() {
@@ -118,9 +121,23 @@ public class LoxTest {
     }
 
     @Test
+    public void classWithFunCallTest() throws IOException {
+        Lox.runFile(sourceFile("class_fun_call.lox"));
+    }
+
+    @Test
+    public void classThisTest() throws  IOException{
+        Lox.runFile( sourceFile("class_this.lox"));
+    }
+
+    @Test
     public void testDanglingElse() {
         if (1==1)
             if(1 == 2) System.out.println("top level");
         else System.out.println("nested");
+    }
+
+    String sourceFile(String name) {
+        return resourcePath + "source/" + name;
     }
 }

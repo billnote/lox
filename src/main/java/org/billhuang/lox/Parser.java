@@ -39,7 +39,7 @@ import java.util.List;
  * ======== expression =========
  *
  * expression  -> assignment ;
- * assignment  -> IDENTIFIER "=" assignment
+ * assignment  -> (call ".")? IDENTIFIER "=" assignment
  *              | logic_or;
  * logic_or    -> logic_and ( "or" logic_and)* ;
  * logic_and   -> conditional ( "and" conditional)* ;
@@ -57,6 +57,7 @@ import java.util.List;
  *              | "(" expression ")"
  *              | IDENTIFIER ;
  *              | functionBody
+ *              | "this"
  *
  * @Description
  * @Data 2022/2/25 11:16
@@ -430,7 +431,7 @@ public class Parser {
     }
 
     /**
-     * assignment  -> IDENTIFIER "=" assignment
+     * assignment  -> (call ".")? IDENTIFIER "=" assignment
      *              | logic_or;
      * @return
      */
@@ -444,6 +445,9 @@ public class Parser {
             if (expr instanceof Expr.Variable) {
                 Token name = ((Expr.Variable)expr).name;
                 return new Expr.Assign(name, value);
+            } else if (expr instanceof Expr.Get) {
+                Expr.Get get = (Expr.Get) expr;
+                return new Expr.Set(get.object, get.name, value);
             }
 
             error(equals, "Invalid assignment target.");
@@ -634,6 +638,8 @@ public class Parser {
     /** primary -> NUMBER | STRING | "true" | "false | "nil"
      *           | "(" expression ")"
      *           | IDENTIFIER ;
+     *           | functionBody
+     *           | "this"
      **/
     private Expr primary() {
         if (match(TokenType.FALSE)) {
@@ -661,6 +667,10 @@ public class Parser {
 
         if (match(TokenType.FUN)) {
             return functionBody();
+        }
+
+        if (match(TokenType.THIS)) {
+            return new Expr.This(previous());
         }
 
         throw error(peek(), "Expect expression.");

@@ -29,7 +29,7 @@ public class Lox {
     static boolean hadError = false;
     static boolean hadRuntimeError = false;
 
-    private static void runFile(String path) throws IOException {
+    static void runFile(String path) throws IOException {
         byte[] bytes = Files.readAllBytes(Paths.get(path));
         run(new String(bytes, Charset.defaultCharset()));
 
