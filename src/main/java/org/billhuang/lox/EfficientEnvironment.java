@@ -63,7 +63,7 @@ public class EfficientEnvironment {
         assignAt(null, 0, name, value);
     }
 
-    void assignAt(Integer distance, int slot, Token name, Object value) {
+    void assignAt(Integer distance, Integer slot, Token name, Object value) {
         if (distance == null) {
             if (globals.containsKey(name.lexeme)) {
                 globals.put(name.lexeme, value);

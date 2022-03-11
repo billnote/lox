@@ -36,7 +36,7 @@ public class LoxTest {
 
     @Test
     public void blockTest() {
-        String source = "var a = 1; { var a = a + 2; print a;}";
+        String source = "var a = 1; { var b = a + 2; print b;}";
         Lox.run(source);
     }
 
@@ -48,7 +48,7 @@ public class LoxTest {
 
     @Test
     public void whileTest() {
-        String source = "var a = 2; while (a > 0) {print a; a = a-1;}";
+        String source = "var a = 2; while (a > 0) {print a; a = a - 1;}";
         Lox.run(source);
     }
 
