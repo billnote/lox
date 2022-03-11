@@ -155,6 +155,20 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
     }
 
     @Override
+    public Object visitSuperExpr(Expr.Super expr) {
+        Integer distance = locals.get(expr);
+        LoxClass superclass = (LoxClass) environment.getAt(distance, slots.get(expr), "super");
+        LoxInstance object = (LoxInstance) environment.getAt(distance - 1, 0, "this");
+
+        LoxFunction method = superclass.findMethod(expr.method.lexeme);
+        if (method == null) {
+            throw new RuntimeError(expr.method, String.format("Undefined property '%s'.", expr.method.lexeme));
+        }
+
+        return method.bind(object);
+    }
+
+    @Override
     public Object visitFunctionExpr(Expr.Function expr) {
         return new LoxFunction(null, expr, environment, false);
     }
@@ -295,6 +309,17 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
     public Void visitClassStmt(Stmt.Class stmt) {
         //environment.define(stmt.name.lexeme, null);
 
+        Object superclass = null;
+        if (stmt.superclass != null) {
+            superclass = evaluate(stmt.superclass);
+            if (!(superclass instanceof LoxClass)) {
+                throw new RuntimeError(stmt.superclass.name, "Superclass must be a class.");
+            }
+
+            environment = new EfficientEnvironment(environment);
+            environment.define("super", superclass);
+        }
+
         Map<String, LoxFunction> methods = new HashMap<>();
         for (Stmt.Function method : stmt.methods) {
             LoxFunction function = new LoxFunction(method.name.lexeme, method.function, environment,
@@ -302,11 +327,15 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
             methods.put(method.name.lexeme, function);
         }
 
-        LoxClass loxClass = new LoxClass(stmt.name.lexeme, methods);
+        LoxClass loxClass = new LoxClass(stmt.name.lexeme, (LoxClass) superclass, methods);
 
         for (Stmt.Function method: stmt.staticMethods) {
             LoxFunction function = new LoxFunction(method.name.lexeme, method.function, environment, false);
             loxClass.set(method.name, function);
+        }
+
+        if (superclass != null) {
+            environment = environment.enclosing;
         }
 
         environment.define(stmt.name.lexeme, loxClass);

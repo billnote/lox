@@ -13,7 +13,7 @@ import java.util.List;
  *              | funDecl
  *              | varDecl
  *              | statement ;
- * classDecl   -> "class" IDENTIFIER "{" function* "}" ;
+ * classDecl   -> "class" IDENTIFIER ( "<" IDENTIFIER )? "{" function* "}" ;
  * funDecl     -> "fun" function ;
  * function    -> ( "class" )? IDENTIFIER "(" parameters? ")" block ;
  * parameters  -> IDENTIFIER ( "," IDENTIFIER )* ;
@@ -58,6 +58,7 @@ import java.util.List;
  *              | IDENTIFIER ;
  *              | functionBody
  *              | "this"
+ *              | "supper" "." IDENTIFIER
  *
  * @Description
  * @Data 2022/2/25 11:16
@@ -141,11 +142,18 @@ public class Parser {
     }
 
     /**
-     * classDecl   -> "class" IDENTIFIER "{" function* "}" ;
+     * classDecl   -> "class" IDENTIFIER ( "<" IDENTIFIER )? "{" function* "}" ;
      * @return
      */
     private Stmt classDecl() {
         Token className = consume(TokenType.IDENTIFIER, "Expect class name.");
+
+        Expr.Variable superclass = null;
+        if (match(TokenType.LESS)) {
+            consume(TokenType.IDENTIFIER, "Expect super class name.");
+            superclass = new Expr.Variable(previous());
+        }
+
         consume(TokenType.LEFT_BRACE, "Expect '{' after class name.");
 
         List<Stmt.Function> functions = new ArrayList<>();
@@ -162,7 +170,7 @@ public class Parser {
 
         consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.");
 
-        return new Stmt.Class(className, functions, staticFunctions);
+        return new Stmt.Class(className, superclass, functions, staticFunctions);
     }
 
     /**
@@ -682,6 +690,14 @@ public class Parser {
 
         if (match(TokenType.THIS)) {
             return new Expr.This(previous());
+        }
+
+        if (match(TokenType.SUPER)) {
+            Token keyword = previous();
+            consume(TokenType.DOT, "Expect '.' after 'super'");
+            Token method = consume(TokenType.IDENTIFIER, "Expect superclass method name");
+            return new Expr.Super(keyword, method);
+
         }
 
         throw error(peek(), "Expect expression.");
